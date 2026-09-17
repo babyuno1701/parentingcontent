@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Executive Parenting Coach - OS V20</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --slate-900: #0f172a; --slate-800: #1e293b; --slate-50: #f8fafc;
+            --gold-primary: #d4af37; --gold-hover: #b5952f; --gold-light: #fefce8;
+        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: var(--slate-900); -webkit-font-smoothing: antialiased; }
+        h1, h2, h3, .serif-font { font-family: 'Playfair Display', serif; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 4px 24px -6px rgba(0,0,0,0.06); }
+        .gold-gradient-bg { background: linear-gradient(135deg, var(--gold-primary) 0%, #e6c86a 50%, var(--gold-primary) 100%); color: white; transition: all 0.3s ease; }
+        .gold-gradient-bg:hover { transform: translateY(-2px); box-shadow: 0 12px 20px -8px rgba(212, 175, 55, 0.4); }
+        
+        input, select, textarea { transition: all 0.2s ease; background-color: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; font-size: 16px !important; }
+        input::placeholder, textarea::placeholder { color: #94a3b8; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold-primary) !important; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important; background-color: #ffffff; }
+        
+        input[type="checkbox"] { appearance: none; width: 1.5rem; height: 1.5rem; border: 2px solid #cbd5e1; border-radius: 0.375rem; background-color: white; cursor: pointer; position: relative; transition: all 0.2s; flex-shrink: 0; }
+        input[type="checkbox"]:checked { background-color: var(--gold-primary); border-color: var(--gold-primary); }
+        input[type="checkbox"]:checked::after { content: ''; position: absolute; left: 8px; top: 3px; width: 6px; height: 12px; border: solid white; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+        
+        .script-table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid #e2e8f0; background: white; }
+        .script-table-container table { width: 100%; min-width: 700px; border-collapse: separate; border-spacing: 0; font-size: 14.5px; }
+        .script-table-container th { background-color: var(--slate-900); color: var(--gold-primary); padding: 14px 16px; text-align: left; font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; border-bottom: 3px solid var(--gold-primary); white-space: nowrap; }
+        .script-table-container td { border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; padding: 14px 16px; vertical-align: top; line-height: 1.7; color: #334155; }
+        .script-table-container tr:last-child td { border-bottom: none; }
+        .script-table-container td:last-child { border-right: none; }
+        .script-table-container tr:nth-child(even) { background-color: #f8fafc; }
+        .script-table-container tr td:first-child:contains("Hook") { font-weight: 700; background-color: var(--gold-light); color: var(--slate-900); border-left: 4px solid var(--gold-primary); }
+        
+        .diff-added { color: #166534; font-weight: 700; background-color: #dcfce7; padding: 2px 4px; border-radius: 4px; }
+        .diff-removed { color: #9ca3af; text-decoration: line-through; background-color: #fee2e2; padding: 2px 4px; border-radius: 4px; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        #toast-container { position: fixed; top: 16px; right: 16px; left: 16px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        @media (min-width: 640px) { #toast-container { left: auto; max-width: 350px; } }
+        .toast { padding: 14px 18px; border-radius: 12px; background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); font-weight: 600; font-size: 14px; border-left: 4px solid; pointer-events: auto; }
+        .toast.show { transform: translateY(0); }
+        .toast.success { border-color: #10b981; color: #065f46; }
+        .toast.error { border-color: #ef4444; color: #991b1b; }
+        .toast.info { border-color: #3b82f6; color: #1e40af; }
+        .toast.warning { border-color: #f59e0b; color: #92400e; }
+
+        .loader { border: 3px solid rgba(212, 175, 55, 0.2); border-top: 3px solid var(--gold-primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .modal-overlay { background-color: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="pb-24 text-slate-800">
+
+    <div id="toast-container"></div>
+
+    <div class="w-full max-w-[1500px] mx-auto p-3 sm:p-4 md:p-6 my-2 sm:my-4">
+        <!-- HEADER -->
+        <div class="glass-panel rounded-2xl md:rounded-3xl mb-6 overflow-hidden">
+            <div class="bg-slate-900 p-6 md:p-10 text-center relative overflow-hidden">
+                <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                <div class="absolute top-0 left-0 w-full h-1 gold-gradient-bg"></div>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl text-white tracking-wide mb-2 font-bold serif-font relative z-10 leading-tight">THE EXECUTIVE PARENTING COACH</h1>
+                <p class="text-[10px] md:text-xs text-[#d4af37] tracking-[0.15em] md:tracking-[0.2em] uppercase font-semibold relative z-10">Production OS • V20 The Deep Impact</p>
+            </div>
+            
+            <div class="p-4 md:p-6 flex flex-col lg:flex-row items-end gap-4 justify-between border-t border-gray-100 bg-white/60">
+                <div class="w-full lg:w-5/12">
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">🔑 Khóa API (Gemini API Key)</label>
+                    <input type="password" id="apiKey" placeholder="Dán API Key..." class="w-full rounded-xl p-3.5 shadow-sm">
+                </div>
+                <div class="w-full lg:w-5/12">
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex justify-between items-center">
+                        <span>🧠 Động Cơ Suy Luận (Model)</span>
+                        <button onclick="scanModels()" class="text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-md transition"><span id="scanIcon">🔄</span> Quét</button>
+                    </label>
+                    <select id="aiModel" class="w-full rounded-xl p-3.5 font-bold shadow-sm text-slate-800 border-blue-200 bg-blue-50/50">
+                        <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (Khuyên dùng: Viết Kịch bản chuyên sâu)</option>
+                        <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (Khuyên dùng: Gợi ý Idea)</option>
+                        <option value="gemini-2.0-flash-exp">🚀 Gemini 2.0 Flash Exp</option>
+                    </select>
+                </div>
+                <div class="w-full lg:w-2/12">
+                    <button onclick="saveConfig()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-4 rounded-xl transition duration-300 text-sm shadow-md">
+                        Lưu Thiết Lập
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- CỘT TRÁI: FORM NHẬP LIỆU -->
+            <div class="lg:col-span-4 space-y-5">
+                <div class="glass-panel p-5 md:p-8 rounded-2xl md:rounded-3xl">
+                    <h2 class="text-xl serif-font border-b border-gray-200 pb-3 mb-5 font-bold text-slate-900 flex justify-between items-center">
+                        Thiết Lập Dữ Liệu
+                        <span class="text-[10px] font-sans font-bold text-white bg-slate-800 px-3 py-1 rounded-full tracking-wider uppercase hidden sm:inline-block">Input Form</span>
+                    </h2>
+                    
+                    <div class="space-y-5">
+                        <!-- THỂ LOẠI -->
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-gray-200">
+                            <label class="block text-sm font-bold text-slate-800 mb-2">🎬 Thể Loại Sản Xuất</label>
+                            <select id="scriptType" onchange="toggleScriptFields()" class="w-full rounded-xl p-3.5 font-semibold text-blue-900 bg-white shadow-sm">
+                                <option value="master">1. Master Youtube (Chuẩn 15 phút)</option>
+                                <option value="reels">2. Video Reels Viral (01 - 03 phút)</option>
+                                <option value="zoom">3. Video Thông Báo Zoom/Live</option>
+                            </select>
+                        </div>
+
+                        <!-- TRƯỜNG ĐỘNG -->
+                        <div id="dynamicFields" class="space-y-4">
+                            <div id="aspectRatioField" class="hidden">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">📐 Khung hình hiển thị</label>
+                                <select id="aspectRatio" class="w-full rounded-xl p-3.5 shadow-sm">
+                                    <option value="Dọc (9:16)">Dọc (9:16) - Tiktok, Shorts</option>
+                                    <option value="Ngang (16:9)">Ngang (16:9) - Youtube, FB</option>
+                                    <option value="Vuông (1:1)">Vuông (1:1) - FB Post</option>
+                                </select>
+                            </div>
+
+                            <div id="masterFields" class="space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">📑 Số lượng Chương</label>
+                                        <select id="chapterCount" class="w-full rounded-xl p-3.5 shadow-sm">
+                                            <option value="4">4 Chương (Tiêu chuẩn)</option>
+                                            <option value="2">2 Chương (Rút gọn)</option>
+                                            <option value="3">3 Chương (Vừa phải)</option>
+                                            <option value="5">5 Chương (Chuyên sâu)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">🎬 Bối cảnh quay (Setting)</label>
+                                        <select id="settingContext" class="w-full rounded-xl p-3.5 shadow-sm">
+                                            <option value="Phòng khách ấm cúng ở nhà (Ngồi sofa, tâm sự gần gũi)">Phòng khách ở nhà</option>
+                                            <option value="Ban công chung cư thoáng đãng">Ban công chung cư</option>
+                                            <option value="Góc làm việc (C-Level, sang trọng nhưng tĩnh lặng)">Góc làm việc (Sang trọng)</option>
+                                            <option value="Outdoor - Quán cafe yên tĩnh">Outdoor - Quán cafe yên tĩnh</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="reelsFields" class="hidden space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-slate-700 mb-2">⏱️ Thời lượng Video</label>
+                                    <select id="reelDuration" class="w-full rounded-xl p-3.5 shadow-sm">
+                                        <option value="01 phút">01 phút</option>
+                                        <option value="02 phút">02 phút</option>
+                                        <option value="03 phút">03 phút</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Trend Link -->
+                            <div id="trendField" class="bg-amber-50/80 p-4 sm:p-5 rounded-2xl border border-amber-100 shadow-sm transition-all duration-300">
+                                <label class="block text-sm font-bold text-amber-900 mb-2">🔥 Khai thác Trending / Học thuyết</label>
+                                <input type="text" id="trendLink" placeholder="Dán link bài báo, trend..." class="w-full rounded-xl p-3.5 bg-white border-amber-200">
+                            </div>
+                        </div>
+
+                        <hr class="border-gray-100 my-4">
+                        
+                        <!-- PILLAR & TỬ HUYỆT -->
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 mb-2 flex justify-between items-center">
+                                <span>📌 Trụ cột (Pillar)</span>
+                                <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded" id="pillarCountText">0/3 Chọn</span>
+                            </label>
+                            <div class="border border-gray-200 rounded-xl p-4 bg-slate-50 max-h-[250px] overflow-y-auto custom-scrollbar shadow-inner">
+                                <div class="font-bold text-[11px] text-slate-400 uppercase tracking-widest mb-3 mt-1">Tầng Reach</div>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 7: Game/Thiết bị"> <span class="text-sm font-medium text-slate-700 leading-tight">7: Game & Thiết bị số</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 4: Giao tiếp/Chống đối"> <span class="text-sm font-medium text-slate-700 leading-tight">4: Giao tiếp & Chống đối</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 5: Kỷ luật/Giới hạn"> <span class="text-sm font-medium text-slate-700 leading-tight">5: Kỷ luật & Giới hạn</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 8: Tuổi dậy thì"> <span class="text-sm font-medium text-slate-700 leading-tight">8: Dấu hiệu Tuổi dậy thì</span></label>
+
+                                <div class="font-bold text-[11px] text-slate-400 uppercase tracking-widest mt-5 mb-3 border-t border-gray-200 pt-3">Tầng Authority</div>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 3: Kết nối [CORE]"> <span class="text-sm font-bold text-[#d4af37] leading-tight">3: Kết nối [CORE]</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 2: Bình an nội tâm"> <span class="text-sm font-medium text-slate-700 leading-tight">2: Bình an nội tâm ba mẹ</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 4: Giao tiếp Coaching"> <span class="text-sm font-medium text-slate-700 leading-tight">4: Giao tiếp kiểu Coaching</span></label>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 1: Hiểu Con"> <span class="text-sm font-medium text-slate-700 leading-tight">1: Hiểu Con</span></label>
+
+                                <div class="font-bold text-[11px] text-slate-400 uppercase tracking-widest mt-5 mb-3 border-t border-gray-200 pt-3">Tầng Trust</div>
+                                <label class="flex items-start space-x-3 mb-3 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 10: Trưởng thành cùng con"> <span class="text-sm font-medium text-slate-700 leading-tight">10: Trưởng thành cùng con</span></label>
+                                <label class="flex items-start space-x-3 mb-2 cursor-pointer"><input type="checkbox" class="pillar-cb mt-0.5" value="Pillar 11: Mẹ Coach Career Path"> <span class="text-sm font-medium text-slate-700 leading-tight">11: Mẹ Coach Career Path</span></label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 mb-2">🎯 Tử Huyệt Tâm Lý</label>
+                            <select id="painpoint" class="w-full rounded-xl p-3.5 shadow-sm bg-white">
+                                <option value="">-- Chọn Tử Huyệt --</option>
+                                <optgroup label="Bệnh nghề nghiệp">
+                                    <option value="Hội chứng Khoán trắng tình thương">1. Khoán trắng tình thương (Dùng tiền thay thời gian)</option>
+                                    <option value="Tư duy Fix-it (Sửa lỗi)">2. Tư duy Fix-it (Sửa lỗi thay vì thấu cảm)</option>
+                                    <option value="Kỷ luật quả lắc">3. Kỷ luật quả lắc (Executive Guilt)</option>
+                                </optgroup>
+                                <optgroup label="Áp lực thể diện & Gia tộc">
+                                    <option value="Áp lực Chiếc cúp sống">4. Áp lực Chiếc cúp sống (Trang sức khoe khoang)</option>
+                                    <option value="Lời nguyền Thế hệ F2">5. Lời nguyền Thế hệ F2 (Gánh nặng di sản)</option>
+                                </optgroup>
+                                <optgroup label="Quá khứ đối lập Hiện tại">
+                                    <option value="Hội chứng Đền bù tuổi thơ">6. Hội chứng Đền bù tuổi thơ (Nuông chiều quá độ)</option>
+                                    <option value="Tước đoạt quyền được buồn">7. Tước đoạt quyền được buồn (Phủ nhận tổn thương)</option>
+                                    <option value="Phụ huynh dọn đường">8. Phụ huynh dọn đường (Làm thay con mọi thứ)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Ý TƯỞNG AI GENERATOR -->
+                        <div class="bg-blue-50/60 p-4 sm:p-5 rounded-2xl relative overflow-hidden border border-blue-200 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                                <label class="block text-sm font-bold text-blue-900 flex items-center gap-2">
+                                    💡 Bối cảnh & Tình huống
+                                </label>
+                                <div class="flex gap-2 w-full sm:w-auto">
+                                    <button type="button" onclick="openIdeaModal()" id="btnViewIdeas" class="hidden text-xs bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold px-3 py-2.5 rounded-xl transition-all shadow-sm flex-1 sm:flex-none text-center">
+                                        👁️ Xem kho (<span id="ideaCountBadge">0</span>)
+                                    </button>
+                                    <button type="button" onclick="generateIdeas(10)" id="btnIdea" class="text-xs bg-white hover:bg-blue-600 hover:text-white border border-blue-300 text-blue-700 font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 justify-center flex-1 sm:flex-none">
+                                        <span id="ideaIcon">✨</span> AI Gợi ý 10 Option
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">🚩 Dấu hiệu bề mặt</label>
+                                    <input type="text" id="symptom" placeholder="VD: Con đóng sầm cửa không ăn cơm..." class="w-full rounded-xl p-3.5 bg-white shadow-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">📖 Case Study chi tiết</label>
+                                    <textarea id="casestudy" rows="3" placeholder="Tình huống đời thực để phân tích..." class="w-full rounded-xl p-3.5 bg-white shadow-sm custom-scrollbar"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CTA -->
+                        <div class="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-gray-200">
+                            <label class="block text-sm font-bold text-slate-800 mb-3">🎯 Định hướng CTA</label>
+                            <select id="ctaType" onchange="toggleCtaInput()" class="w-full rounded-xl p-3.5 mb-3 bg-white shadow-sm">
+                                <option value="course">Giới thiệu Khóa Học / Sản Phẩm</option>
+                                <option value="next_video">Hé mở tò mò (Open loop) xem tiếp</option>
+                                <option value="insight_question">Hỏi insight chạm đáy (Comment)</option>
+                            </select>
+                            <input type="text" id="ctaProduct" placeholder="Nhập Tên khóa học / Dịch vụ..." class="w-full rounded-xl p-3.5 shadow-sm bg-white hidden">
+                        </div>
+
+                        <button onclick="executeScriptGeneration()" id="btnGenerate" class="w-full gold-gradient-bg font-bold text-[15px] py-4 rounded-2xl uppercase tracking-widest mt-4 flex justify-center items-center gap-2 border-0 shadow-lg">
+                            <span>🎬 Khởi Chạy Kịch Bản</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI: OUTPUT & EDITOR -->
+            <div class="lg:col-span-8 flex flex-col h-full space-y-6">
+                <!-- KHUNG XUẤT KỊCH BẢN -->
+                <div class="glass-panel p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl flex-grow flex flex-col relative min-h-[500px] overflow-hidden">
+                    <h2 class="text-xl md:text-2xl serif-font border-b border-gray-200 pb-4 text-slate-900 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <span class="font-bold">Kịch Bản Đạo Diễn (Master Script)</span>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="downloadMD()" class="text-[11px] md:text-xs font-sans font-bold bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 px-3 rounded-xl transition shadow-sm uppercase tracking-wider flex-1 sm:flex-none text-center">
+                                ⬇️ File .MD
+                            </button>
+                            <button onclick="copyTable()" class="text-[11px] md:text-xs font-sans font-bold bg-slate-900 hover:bg-slate-800 text-white py-2.5 px-4 rounded-xl transition shadow-md uppercase tracking-wider flex-1 sm:flex-none text-center">
+                                📋 Copy Bảng
+                            </button>
+                        </div>
+                    </h2>
+                    
+                    <div id="loadingIndicator" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex-col justify-center items-center rounded-3xl">
+                        <div class="loader mb-4"></div>
+                        <p class="text-slate-800 font-bold tracking-wide text-sm md:text-base" id="loadingText">AI đang phân rã cấu trúc & tạc độ sâu tâm lý...</p>
+                    </div>
+
+                    <div id="scriptOutput" class="flex-grow mt-4 md:mt-6 w-full max-w-full overflow-hidden">
+                        <div class="text-slate-400 text-center h-full flex flex-col items-center justify-center italic text-sm py-10">
+                            <div class="w-16 h-16 mb-4 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                            </div>
+                            Vui lòng nhập liệu & khởi chạy Đạo diễn AI để xuất kịch bản.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TÍNH NĂNG CHỈNH SỬA BẢN NHÁP (DIFF EDITOR) -->
+                <div id="editPanel" class="hidden glass-panel p-5 md:p-8 rounded-2xl md:rounded-3xl shadow-lg border-l-4 border-l-blue-500">
+                    <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">✍️ Trợ Lý Đạo Diễn (Diff Editor)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                        <div class="md:col-span-1 border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Phạm vi:</label>
+                            <label class="flex items-center space-x-3 text-sm p-3 bg-slate-50 rounded-xl border border-slate-200"><input type="checkbox" id="editAll" checked class="rounded text-blue-600"> <span class="font-bold">Toàn bộ kịch bản</span></label>
+                            <p class="text-[10px] text-gray-500 italic mt-3 leading-relaxed hidden md:block">* Yêu cầu AI đối chiếu: <span class="text-red-500 line-through">xóa chữ cũ</span> và <span class="text-green-700 font-bold">thêm chữ mới</span>.</p>
+                        </div>
+                        <div class="md:col-span-3 flex flex-col justify-between">
+                            <textarea id="editPrompt" rows="3" class="w-full rounded-xl p-3.5 text-sm mb-3 md:mb-4 bg-white shadow-inner border-gray-300" placeholder="VD: Sửa lời thoại chương 2 cho mềm mỏng hơn, bớt học thuật..."></textarea>
+                            <button onclick="requestEdit()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-blue-700 transition uppercase tracking-wider text-xs md:text-sm">✨ Phát Sinh Bản So Sánh</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LƯU TRỮ CHÍNH -->
+                <div id="actionPanel" class="hidden glass-panel p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-lg border-t-4 border-t-gold">
+                    <button onclick="saveToDashboard()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg transition duration-300 tracking-wider uppercase text-xs md:text-sm">
+                        📥 TẢI FILE (.DOC) & LƯU VÀO HỆ ĐIỀU HÀNH BÊN DƯỚI
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD QUẢN LÝ TIẾN ĐỘ -->
+        <div class="mt-8 md:mt-12 glass-panel rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+            <div class="bg-slate-900 p-5 md:p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-lg md:text-xl font-bold text-white tracking-wide serif-font">📊 Bảng Quản Lý Tiến Độ (OS Dashboard)</h2>
+                <div class="space-x-2 md:space-x-3 flex items-center w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <button onclick="exportExcel()" class="text-[10px] md:text-xs bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-3 md:px-4 rounded-lg shadow transition uppercase tracking-wider whitespace-nowrap">📥 Xuất Excel</button>
+                    <button onclick="toggleTrashView()" class="text-[10px] md:text-xs text-slate-300 font-semibold hover:text-white transition uppercase tracking-wider whitespace-nowrap" id="btnToggleTrash">🗑️ Thùng rác</button>
+                    <button onclick="emptyTrash()" class="text-[10px] md:text-xs text-red-400 font-semibold hidden hover:text-red-300 uppercase tracking-wider whitespace-nowrap" id="btnEmptyTrash">Dọn sạch</button>
+                </div>
+            </div>
+            <div class="w-full overflow-x-auto bg-white p-2 md:p-4 rounded-b-2xl md:rounded-b-3xl">
+                <table class="w-full text-sm text-left text-slate-700 border-collapse min-w-[850px]">
+                    <thead class="text-[11px] md:text-xs text-slate-500 uppercase bg-slate-50">
+                        <tr>
+                            <th class="px-4 py-4 rounded-tl-lg text-center w-12 border-b">STT</th>
+                            <th class="px-4 py-4 border-b">SKU / Ngày</th>
+                            <th class="px-4 py-4 border-b">Thời lượng</th>
+                            <th class="px-4 py-4 min-w-[200px] border-b">Bối cảnh & Pillar</th>
+                            <th class="px-4 py-4 border-b">Link Docs (Team Update)</th>
+                            <th class="px-4 py-4 border-b">Trạng thái</th>
+                            <th class="px-4 py-4 rounded-tr-lg text-center w-24 border-b">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboardBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SO SÁNH (DIFF EDITOR) -->
+    <div id="diffModal" class="fixed inset-0 z-50 hidden flex justify-center items-center p-2 sm:p-4 md:p-6 modal-overlay">
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-[95vw] h-[95vh] md:h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 md:p-5 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50">
+                <h3 class="font-bold text-lg md:text-xl text-slate-900 serif-font">🔍 So Sánh Phiên Bản Kịch Bản</h3>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="closeDiffModal()" class="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-2.5 text-slate-600 border border-slate-300 rounded-xl font-bold hover:bg-slate-100 transition text-sm">❌ Hủy (Giữ Gốc)</button>
+                    <button onclick="applyEdit()" class="flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 btn-gold rounded-xl font-bold shadow-lg bg-[#d4af37] text-white hover:bg-[#b5952f] transition text-sm">✅ Dán Đè Bản Mới</button>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden bg-white">
+                <div class="w-full lg:w-1/2 flex-1 border-b lg:border-b-0 lg:border-r p-4 overflow-y-auto bg-slate-50 relative">
+                    <h4 class="font-bold text-slate-400 mb-3 tracking-wider uppercase text-[10px] md:text-xs sticky top-0 bg-slate-50 z-10 pb-2">Bản Gốc</h4>
+                    <div id="originalScriptView" class="script-table-container"></div>
+                </div>
+                <div class="w-full lg:w-1/2 flex-1 p-4 overflow-y-auto bg-white relative">
+                    <h4 class="font-bold text-blue-600 mb-3 tracking-wider uppercase text-[10px] md:text-xs sticky top-0 bg-white z-10 pb-2">Bản Mới (Xanh: Thêm | Đỏ: Xóa)</h4>
+                    <div id="draftScriptView" class="script-table-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GỢI Ý IDEA (KHO Ý TƯỞNG) -->
+    <div id="ideaModal" class="fixed inset-0 z-50 hidden flex justify-center items-center p-2 sm:p-4 md:p-6 modal-overlay">
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden border border-gray-200">
+            <div class="p-5 md:p-6 border-b border-gray-100 bg-slate-900 flex justify-between items-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-[#d4af37] rounded-full blur-3xl opacity-20 translate-x-1/2 -translate-y-1/2"></div>
+                <h3 class="font-bold text-lg md:text-xl text-white flex items-center gap-2 md:gap-3 relative z-10 serif-font tracking-wide" id="ideaModalTitle">
+                    <span class="text-xl md:text-2xl">💡</span> Kho Ý Tưởng Đạo Diễn
+                </h3>
+                <button onclick="closeIdeaModal()" class="text-slate-400 hover:text-white font-bold text-2xl md:text-3xl relative z-10 transition px-2">&times;</button>
+            </div>
+            
+            <div id="ideaListContent" class="p-4 md:p-6 overflow-y-auto bg-slate-50 flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 custom-scrollbar">
+                <!-- Data rendered here -->
+            </div>
+            
+            <div class="p-4 border-t bg-white flex justify-center shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] relative z-10">
+                 <button onclick="generateIdeas(5)" id="btnLoadMoreIdeas" class="w-full sm:w-auto text-sm bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold px-6 py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
+                    <span id="loadMoreIcon">🔄</span> Tạo Tiếp 5 Option Khác
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRawMarkdown = ""; 
+        let draftRawMarkdown = ""; 
+        let currentSKU = "";
+        let isTrashView = false;
+        
+        let globalIdeas = [];
+        let lastIdeaPromptHash = "";
+
+        // Toast System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'ℹ️';
+            if(type === 'success') icon = '✅';
+            if(type === 'error') icon = '❌';
+            if(type === 'warning') icon = '⚠️';
+
+            toast.innerHTML = `<span class="text-lg">${icon}</span> <span class="leading-snug">${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('geminiApiKey');
+            const savedModel = localStorage.getItem('geminiModel');
+            if(savedKey) document.getElementById('apiKey').value = savedKey;
+            if(savedModel) document.getElementById('aiModel').value = savedModel;
+            
+            document.querySelectorAll('.pillar-cb').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checkedCount = document.querySelectorAll('.pillar-cb:checked').length;
+                    if(checkedCount > 3) {
+                        cb.checked = false; 
+                        showToast('Chỉ nên mix tối đa 3 Pillar để kịch bản không bị loãng nhé.', 'warning');
+                    }
+                    document.getElementById('pillarCountText').innerText = `${document.querySelectorAll('.pillar-cb:checked').length}/3 Chọn`;
+                });
+            });
+            toggleScriptFields();
+            loadDashboard();
+        });
+
+        function saveConfig() {
+            const key = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            if(key) {
+                localStorage.setItem('geminiApiKey', key);
+                localStorage.setItem('geminiModel', model);
+                showToast("Đã lưu cấu hình API & Model!", "success");
+            } else {
+                showToast("Vui lòng nhập API Key trước khi lưu.", "error");
+            }
+        }
+
+        async function scanModels() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) return showToast("Vui lòng nhập API Key để quét!", "error");
+            
+            const icon = document.getElementById('scanIcon');
+            icon.classList.add('animate-spin');
+            
+            const select = document.getElementById('aiModel');
+            const fallbackOptions = `
+                <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (Khuyên dùng: Viết Kịch bản)</option>
+                <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (Khuyên dùng: Gợi ý Idea)</option>
+                <option value="gemini-2.0-flash-exp">🚀 Gemini 2.0 Flash Exp</option>
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                if (!response.ok) throw new Error("API Key không hợp lệ.");
+                
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                select.innerHTML = '';
+                let count = 0;
+                
+                if (data.models) {
+                    data.models.forEach(m => {
+                        if(m.name.includes('gemini') && m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent')) {
+                            const val = m.name.replace('models/', '');
+                            const opt = document.createElement('option');
+                            opt.value = val;
+                            if(val.includes('pro')) opt.text = `🧠 ${m.displayName} (Viết sâu)`;
+                            else if(val.includes('exp')) opt.text = `🚀 ${m.displayName} (Thử nghiệm)`;
+                            else opt.text = `⚡ ${m.displayName} (Tốc độ cao)`;
+                            select.appendChild(opt);
+                            count++;
+                        }
+                    });
+                }
+                
+                if (count === 0) throw new Error("Không có model phù hợp.");
+                showToast("Quét thành công danh sách Model!", "success");
+
+            } catch(e) {
+                select.innerHTML = fallbackOptions;
+                showToast(`Đã tải danh sách dự phòng. (${e.message})`, "warning");
+            } finally {
+                icon.classList.remove('animate-spin');
+            }
+        }
+
+        function toggleScriptFields() {
+            const type = document.getElementById('scriptType').value;
+            document.getElementById('masterFields').classList.toggle('hidden', type !== 'master');
+            document.getElementById('reelsFields').classList.toggle('hidden', type !== 'reels');
+            
+            const showTrend = (type === 'master' || type === 'reels');
+            document.getElementById('trendField').classList.toggle('hidden', !showTrend);
+            document.getElementById('aspectRatioField').classList.toggle('hidden', type !== 'master');
+        }
+
+        function toggleCtaInput() {
+            const ctaType = document.getElementById('ctaType').value;
+            const productInput = document.getElementById('ctaProduct');
+            
+            if(ctaType === 'course') {
+                productInput.classList.remove('hidden');
+                productInput.setAttribute('required', 'true');
+            } else {
+                productInput.classList.add('hidden');
+                productInput.removeAttribute('required');
+                productInput.value = '';
+            }
+        }
+
+        // --- HỆ THỐNG KHO Ý TƯỞNG ---
+        async function generateIdeas(count) {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('aiModel').value || 'gemini-1.5-flash'; 
+            
+            if(!apiKey) return showToast("Vui lòng nhập API Key để dùng tính năng AI Gợi ý!", "error");
+            
+            const painpoint = document.getElementById('painpoint').value;
+            const checkedPillars = Array.from(document.querySelectorAll('.pillar-cb:checked')).map(cb => cb.value).join(', ');
+            const trendLink = document.getElementById('trendLink').value.trim();
+            
+            if(!painpoint || !checkedPillars) return showToast("Vui lòng chọn Pillar và Tử Huyệt trước khi lấy gợi ý!", "warning");
+
+            const currentHash = checkedPillars + painpoint + trendLink;
+            if (currentHash !== lastIdeaPromptHash) {
+                globalIdeas = []; 
+                lastIdeaPromptHash = currentHash;
+            }
+
+            const btnIdea = document.getElementById('btnIdea');
+            const btnLoadMore = document.getElementById('btnLoadMoreIdeas');
+            const originalIdeaText = btnIdea.innerHTML;
+            const originalLoadText = btnLoadMore.innerHTML;
+            
+            btnIdea.innerHTML = '<span class="loader border-white w-4 h-4 border-2"></span> Đang tạo...';
+            btnIdea.disabled = true;
+            btnLoadMore.innerHTML = '<span class="loader border-blue-500 w-4 h-4 border-2"></span> Đang kết nối...';
+            btnLoadMore.disabled = true;
+
+            let prompt = `Đóng vai chuyên gia kịch bản. Content cho C-Level parents. Pillar: ${checkedPillars} | Tử huyệt: ${painpoint}`;
+            if(trendLink) prompt += `\nLƯU Ý: Phân tích, chiết xuất ý chính từ LINK TRENDING: ${trendLink}`;
+            prompt += `\nNhiệm vụ: Tạo ${globalIdeas.length > 0 ? `THÊM ${count} ý tưởng MỚI` : `${count} ý tưởng`} tình huống thực tế (Case study). BẮT BUỘC TRẢ VỀ CHUẨN JSON MẢNG:
+[ { "symptom": "[Bối cảnh] + [Hành vi bề mặt]", "case_study": "Chi tiết tình huống..." } ]
+Chỉ trả về chuỗi JSON thuần túy.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                
+                if (!response.ok) throw new Error("API Key quá tải.");
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                let text = data.candidates[0].content.parts[0].text;
+                text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+                const newIdeas = JSON.parse(text);
+
+                globalIdeas = [...globalIdeas, ...newIdeas];
+                
+                renderIdeaModal();
+                openIdeaModal();
+                updateViewBtn();
+                
+                showToast(`Đã tạo thành công ${newIdeas.length} ý tưởng!`, "success");
+
+            } catch (err) {
+                showToast(`Lỗi: ${err.message}. Thử đổi model Flash.`, "error");
+            } finally {
+                btnIdea.innerHTML = originalIdeaText;
+                btnIdea.disabled = false;
+                btnLoadMore.innerHTML = originalLoadText;
+                btnLoadMore.disabled = false;
+            }
+        }
+
+        function renderIdeaModal() {
+            const container = document.getElementById('ideaListContent');
+            container.innerHTML = '';
+            
+            globalIdeas.forEach((idea, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm hover:border-[#d4af37] hover:shadow-md cursor-pointer transition-all duration-300 group relative overflow-hidden flex flex-col justify-between";
+                card.onclick = () => selectIdea(idea.symptom, idea.case_study);
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div>
+                        <div class="font-bold text-slate-800 mb-2 text-sm sm:text-[15px] leading-snug"><span class="text-white bg-[#d4af37] px-2 py-1 rounded text-[10px] sm:text-xs mr-2 shadow-sm whitespace-nowrap">Option ${index + 1}</span> ${idea.symptom}</div>
+                        <div class="text-xs sm:text-[13px] text-slate-500 leading-relaxed mb-3">${idea.case_study}</div>
+                    </div>
+                    <div class="text-[10px] sm:text-xs font-bold text-blue-600 group-hover:text-[#d4af37] transition-colors mt-auto pt-2 border-t border-gray-100 uppercase tracking-wider">👉 Chọn ý tưởng này</div>
+                `;
+                container.appendChild(card);
+            });
+            
+            document.getElementById('ideaModalTitle').innerHTML = `<span class="text-xl md:text-2xl">💡</span> Kho Đã Có ${globalIdeas.length} Option`;
+            
+            setTimeout(() => { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }, 100);
+        }
+
+        function updateViewBtn() {
+            const btnView = document.getElementById('btnViewIdeas');
+            const badge = document.getElementById('ideaCountBadge');
+            if (globalIdeas.length > 0) {
+                btnView.classList.remove('hidden');
+                badge.innerText = globalIdeas.length;
+            } else {
+                btnView.classList.add('hidden');
+            }
+        }
+
+        function selectIdea(sym, caseStr) {
+            document.getElementById('symptom').value = sym;
+            document.getElementById('casestudy').value = caseStr;
+            closeIdeaModal();
+            showToast("Đã chèn ý tưởng vào Form!", "success");
+        }
+
+        function openIdeaModal() {
+            if(globalIdeas.length === 0 && document.getElementById('ideaListContent').innerHTML === '') {
+                return showToast("Kho ý tưởng trống. Hãy bấm Gợi ý trước!", "warning");
+            }
+            document.getElementById('ideaModal').classList.remove('hidden');
+        }
+
+        function closeIdeaModal() { document.getElementById('ideaModal').classList.add('hidden'); }
+
+        function generateSKU(type) {
+            let stats = JSON.parse(localStorage.getItem('skuStatsV20') || '{"master":0,"reels":0,"zoom":0}');
+            stats[type] = (stats[type] || 0) + 1;
+            localStorage.setItem('skuStatsV20', JSON.stringify(stats));
+            let prefix = type === 'master' ? 'MAS' : type === 'reels' ? 'REL' : 'ZOO';
+            return `${prefix}-${String(stats[type]).padStart(3, '0')}`;
+        }
+
+        // --- KHỞI TẠO KỊCH BẢN - V20 THE DEEP IMPACT ---
+        async function executeScriptGeneration() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            if(!apiKey) return showToast('Yêu cầu nhập API Key!', 'error');
+
+            const type = document.getElementById('scriptType').value;
+            const pillars = Array.from(document.querySelectorAll('.pillar-cb:checked')).map(c => c.value).join(', ');
+            const pain = document.getElementById('painpoint').value;
+            const sym = document.getElementById('symptom').value;
+            const caseSt = document.getElementById('casestudy').value;
+            const ctaType = document.getElementById('ctaType').value;
+            
+            let ctaInstruction = "";
+            if (ctaType === 'course') {
+                ctaInstruction = `Chốt CTA bán khóa học: "${document.getElementById('ctaProduct').value}".`;
+            } else if (ctaType === 'next_video') {
+                ctaInstruction = `Hé mở sự tò mò (Open loop) để kêu gọi xem video tiếp theo.`;
+            } else if (ctaType === 'insight_question') {
+                ctaInstruction = `Đặt 1 câu hỏi insight xoáy sâu tâm lý để khán giả comment.`;
+            }
+
+            let trendLink = (type === 'master' || type === 'reels') ? document.getElementById('trendLink').value.trim() : "";
+            
+            if(!pillars || !pain || !sym || !caseSt) return showToast("Vui lòng điền đủ Pillar, Tử huyệt, Triệu chứng và Case Study!", "warning");
+            
+            currentSKU = generateSKU(type);
+
+            // TỐI ƯU HÓA PROMPT V20
+            let systemPromptText = `Đóng vai Chị Kiều - Executive Parenting Coach dành cho giới C-Level. 
+Tôn chỉ: Bắt buộc KHÔNG PHÁN XÉT đúng sai hiện tại. Mọi mâu thuẫn tiêu cực phải được phân tích như là "Kết quả tương lai giả định" nếu giữ cách dạy cũ. 
+
+Dữ liệu đầu vào:
+- Pillar: [${pillars}]
+- Tử huyệt: [${pain}]
+- Vấn đề: [${sym}]
+- Case Study: [${caseSt}]
+${trendLink ? '- TRENDING LINK CẦN LỒNG GHÉP: ' + trendLink : ''}
+
+QUY TẮC CỘT LỜI THOẠI (QUAN TRỌNG NHẤT):
+Cột "Nội dung chính (Lời thoại chi tiết)" TUYỆT ĐỐI CHỈ CHỨA NHỮNG CÂU NÓI PHÁT RA TỪ MIỆNG ĐỂ ĐỌC MÁY NHẮC CHỮ (Teleprompter). KHÔNG BAO GIỜ được để các hành động (VD: mỉm cười, ngập ngừng, nhìn thẳng) hoặc các đoạn text giải thích vào cột Lời thoại. Hãy ném TOÀN BỘ hành động và cảm xúc sang cột "Tư vấn đạo diễn".
+
+QUY TẮC VỀ SỰ SÂU SẮC (CÂU KIM CHỈ NAM):
+Sáng tạo 01 câu "Kim chỉ nam" mang triết lý giáo dục thức tỉnh (Conscious Parenting) mang tầm vóc của các triết gia giáo dục hàng đầu (như Tiến sĩ Shefali Tsabary hay Brené Brown). Đừng viết sáo rỗng. Nó phải là một đòn bẩy tâm lý lật ngược định kiến. Ví dụ: 'Chúng ta không sửa chữa một đứa trẻ, chúng ta đang dọn dẹp lại nội tâm của chính mình'.
+
+QUY TẮC TÍCH HỢP CTA:
+Lời kêu gọi hành động (CTA: ${ctaInstruction}) PHẢI được viết thành lời thoại trực tiếp nằm gọn trong ô Lời Thoại của dòng Đoạn kết (C4).\n\n`;
+
+            if(type === 'master') {
+                const chCount = document.getElementById('chapterCount').value;
+                systemPromptText += `Viết Master YouTube, ${chCount} Chương. Output BẢNG 4 cột: | Chương/Phân đoạn | Lời thoại | Đạo diễn | Giá trị |. Trình bày 6 bước/chương. Tô đỏ <b style="color:red">từ khóa</b>. Dẫn chứng khoa học tâm lý[cite: 1].`;
+            } else if(type === 'reels') {
+                systemPromptText += `Viết Reels Viral. Output BẢNG 4 cột. Cấu trúc 4 bước. Tô đỏ <b style="color:red">từ khóa</b>.`;
+            } else {
+                systemPromptText += `Viết Video Thông báo sự kiện Zoom/Live. Output BẢNG 4 cột. Cấu trúc 4 bước. Tô đỏ <b style="color:red">từ khóa</b>.`;
+            }
+
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('loadingIndicator').classList.add('flex');
+            document.getElementById('actionPanel').classList.add('hidden');
+            document.getElementById('editPanel').classList.add('hidden');
+            
+            const outDiv = document.getElementById('scriptOutput');
+            outDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{text: systemPromptText}] }] })
+                });
+                
+                if (!response.ok) throw new Error("Mạng lỗi hoặc API Key hết hạn mức.");
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                currentRawMarkdown = data.candidates[0].content.parts[0].text;
+                
+                let parsedHTML = marked.parse(currentRawMarkdown);
+                outDiv.innerHTML = parsedHTML.replace(/<table/g, '<div class="script-table-container"><table').replace(/<\/table>/g, '</table></div>');
+                
+                document.getElementById('actionPanel').classList.remove('hidden');
+                document.getElementById('editPanel').classList.remove('hidden');
+                outDiv.classList.remove('hidden');
+                showToast("Viết kịch bản thành công!", "success");
+                
+            } catch (error) { 
+                showToast('Lỗi xuất kịch bản: ' + error.message, "error"); 
+                outDiv.classList.remove('hidden');
+            } finally {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('loadingIndicator').classList.remove('flex');
+            }
+        }
+
+        // --- ĐỘNG CƠ DIFF EDITOR ---
+        async function requestEdit() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const model = document.getElementById('aiModel').value;
+            const prompt = document.getElementById('editPrompt').value;
+            
+            if(typeof Diff === 'undefined') return showToast("Lỗi tải thư viện So sánh. Vui lòng F5 lại trang.", "error");
+            if(!prompt) return showToast("Vui lòng nhập yêu cầu chỉnh sửa!", "warning");
+            if(!currentRawMarkdown) return showToast("Chưa có kịch bản gốc để sửa!", "error");
+            
+            let editSystemPrompt = `Đây là bản nháp gốc của kịch bản:\n\n${currentRawMarkdown}\n\nYÊU CẦU CHỈNH SỬA TỪ ĐẠO DIỄN:\n${prompt}\n\nHãy xuất lại toàn bộ BẢNG kịch bản đã được áp dụng các chỉnh sửa trên. Giữ nguyên cấu trúc BẢNG Markdown. Lưu ý: Lời thoại tuyệt đối chỉ chứa lời nói trực tiếp, tống hết hành động/cảm xúc qua cột Đạo diễn.`;
+            
+            const btn = document.querySelector('#editPanel button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Đang phân tích...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: editSystemPrompt }] }] })
+                });
+                if (!response.ok) throw new Error("Lỗi kết nối.");
+                const data = await response.json();
+                if(data.error) throw new Error(data.error.message);
+
+                draftRawMarkdown = data.candidates[0].content.parts[0].text;
+                
+                document.getElementById('originalScriptView').innerHTML = marked.parse(currentRawMarkdown).replace(/<table/g, '<div class="script-table-container"><table').replace(/<\/table>/g, '</table></div>');
+                
+                const diff = Diff.diffWordsWithSpace(currentRawMarkdown, draftRawMarkdown);
+                let diffMarkdown = "";
+                diff.forEach(part => {
+                    if (part.added) {
+                        let safeVal = part.value.replace(/\|/g, '</span>|<span class="diff-added">'); 
+                        diffMarkdown += `<span class="diff-added">${safeVal}</span>`;
+                    } else if (part.removed) {
+                        let safeVal = part.value.replace(/\|/g, '</del>|<del class="diff-removed">'); 
+                        diffMarkdown += `<del class="diff-removed">${safeVal}</del>`;
+                    } else {
+                        diffMarkdown += part.value;
+                    }
+                });
+
+                document.getElementById('draftScriptView').innerHTML = marked.parse(diffMarkdown).replace(/<table/g, '<div class="script-table-container"><table').replace(/<\/table>/g, '</table></div>');
+                document.getElementById('diffModal').classList.remove('hidden');
+                showToast("Đã đối chiếu hai phiên bản!", "info");
+
+            } catch(err) { 
+                showToast('Lỗi khi sửa bản nháp: ' + err.message, "error"); 
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function closeDiffModal() { document.getElementById('diffModal').classList.add('hidden'); }
+
+        function applyEdit() {
+            currentRawMarkdown = draftRawMarkdown;
+            document.getElementById('scriptOutput').innerHTML = marked.parse(currentRawMarkdown).replace(/<table/g, '<div class="script-table-container"><table').replace(/<\/table>/g, '</table></div>');
+            closeDiffModal();
+            showToast('✅ Đã dán đè Kịch Bản mới thành công!', "success");
+        }
+
+        // --- CÁC TÍNH NĂNG TIỆN ÍCH ---
+        function copyTable() {
+            const outDiv = document.getElementById('scriptOutput');
+            const range = document.createRange();
+            range.selectNodeContents(outDiv);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            try {
+                document.execCommand('copy');
+                showToast('Đã Copy Bảng thành công!', "success");
+            } catch(err) {
+                showToast('Trình duyệt không hỗ trợ copy. Vui lòng bôi đen thủ công.', "warning");
+            }
+            sel.removeAllRanges();
+        }
+
+        function downloadMD() {
+            if(!currentRawMarkdown) return showToast("Chưa có kịch bản để tải!", "warning");
+            const blob = new Blob([currentRawMarkdown], { type: 'text/markdown' });
+            const link = document.createElement('a'); 
+            link.href = URL.createObjectURL(blob); 
+            link.download = `${currentSKU}_KichBan.md`; 
+            link.click();
+            showToast("Tải file .MD thành công!", "success");
+        }
+
+        function exportExcel() {
+            let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+            if(scripts.length === 0) return showToast("Bảng dữ liệu trống!", "warning");
+            
+            let csvContent = "\uFEFFSTT,SKU,Ngay Tao,Thoi Luong,Boi Canh,Pillar,Link Docs,Trang Thai\n";
+            scripts.forEach((row, index) => {
+                csvContent += `${index + 1},"${row.sku}","${row.date}","${row.duration}","${row.context.replace(/"/g, '""')}","${row.pillar.replace(/"/g, '""')}","${row.link}","${row.status}"\n`;
+            });
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }));
+            link.download = "Tracking_Board_OS.csv";
+            link.click();
+            showToast("Xuất Excel thành công!", "success");
+        }
+
+        function saveToDashboard() {
+            if(!currentRawMarkdown) return;
+            
+            const type = document.getElementById('scriptType').value;
+            let durationStr = type === 'master' ? '15 phút' : (type === 'reels' ? document.getElementById('reelDuration').value : 'Zoom');
+            let contextStr = type === 'master' ? document.getElementById('settingContext').options[document.getElementById('settingContext').selectedIndex].text : 'Tùy chọn';
+
+            const newEntry = {
+                id: Date.now(),
+                sku: currentSKU,
+                type: type,
+                duration: durationStr,
+                context: contextStr,
+                date: new Date().toLocaleDateString('vi-VN'),
+                pillar: document.querySelector('.pillar-cb:checked') ? document.querySelector('.pillar-cb:checked').value : 'Tùy chọn',
+                status: 'Demo kịch bản',
+                link: ''
+            };
+            let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+            scripts.push(newEntry); 
+            localStorage.setItem('os_scripts_v20', JSON.stringify(scripts));
+            
+            downloadWordOnly();
+            loadDashboard();
+            showToast("✅ Đã tải Word và Lưu Bảng Tiến Độ!", "success");
+        }
+
+        function downloadWordOnly() {
+            const html = `<html xmlns:w='urn:schemas-microsoft-com:office:word'><head><meta charset='utf-8'><style>body{font-family: 'Times New Roman';} table{width:100%; border-collapse:collapse;} th,td{border:1px solid black; padding:8px;} b{color:red !important;}</style></head><body><h2>KỊCH BẢN ${currentSKU}</h2><hr><br>${marked.parse(currentRawMarkdown).replace(/<table/g, '<table border="1"')}</body></html>`;
+            const link = document.createElement('a'); 
+            link.href = URL.createObjectURL(new Blob(['\ufeff', html], { type: 'application/msword' })); 
+            link.download = `${currentSKU}.doc`; 
+            link.click();
+        }
+
+        function loadDashboard() {
+            const tbody = document.getElementById('dashboardBody');
+            let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+            let viewScripts = scripts.filter(s => isTrashView ? s.status === 'trashed' : s.status !== 'trashed');
+            
+            tbody.innerHTML = viewScripts.length ? '' : `<tr><td colspan="7" class="text-center py-8 text-slate-400 italic">${isTrashView ? 'Thùng rác trống' : 'Chưa có kịch bản nào được lưu'}</td></tr>`;
+
+            viewScripts.forEach((s, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-gray-100";
+                let statusHtml = '';
+                let actionHtml = '';
+
+                if(isTrashView) {
+                    statusHtml = `<span class="text-red-500 text-xs font-medium whitespace-nowrap">Đã xóa (${s.deletedAt})</span>`;
+                    actionHtml = `<button onclick="restoreItem(${s.id})" class="text-[10px] sm:text-xs text-blue-600 font-bold hover:underline bg-blue-50 px-3 py-1.5 rounded w-full sm:w-auto">Phục hồi</button>`;
+                } else {
+                    statusHtml = `
+                        <select onchange="updateAttr(${s.id}, 'status', this.value)" class="border border-slate-300 rounded-lg p-2 text-[10px] sm:text-xs font-semibold bg-white shadow-sm focus:border-blue-500 w-full min-w-[110px]">
+                            <option value="Demo kịch bản" ${s.status === 'Demo kịch bản'?'selected':''}>⏳ Demo</option>
+                            <option value="Final kịch bản" ${s.status === 'Final kịch bản'?'selected':''}>✅ Final</option>
+                            <option value="Đã quay" ${s.status === 'Đã quay'?'selected':''}>🎥 Đã quay</option>
+                            <option value="Đã dựng" ${s.status === 'Đã dựng'?'selected':''}>🎬 Đã dựng</option>
+                        </select>`;
+                        
+                    actionHtml = `
+                        <div class="flex items-center justify-center gap-2">
+                            <input type="checkbox" title="Chọn để Xóa" onchange="document.getElementById('del_btn_${s.id}').classList.toggle('hidden', !this.checked)" class="w-5 h-5 cursor-pointer">
+                            <button id="del_btn_${s.id}" onclick="safeMoveToTrash(${s.id})" class="hidden text-[10px] sm:text-xs text-red-500 font-bold hover:underline bg-red-50 px-2 py-1.5 rounded">Xóa</button>
+                        </div>`;
+                }
+
+                tr.innerHTML = `
+                    <td class="px-3 md:px-4 py-3 text-center font-bold text-slate-500">${index + 1}</td>
+                    <td class="px-4 md:px-5 py-3 font-bold text-slate-800 whitespace-nowrap">${s.sku}<br><span class="font-normal text-[10px] text-slate-400">${s.date}</span></td>
+                    <td class="px-4 md:px-5 py-3 text-[10px] md:text-xs font-bold uppercase text-blue-600 whitespace-nowrap">${s.duration}</td>
+                    <td class="px-4 md:px-5 py-3 text-[11px] md:text-xs text-slate-600 font-medium leading-relaxed min-w-[200px]"><span class="font-bold text-slate-800">Cảnh:</span> ${s.context}<br><span class="font-bold text-slate-800">Pillar:</span> ${s.pillar}</td>
+                    <td class="px-4 md:px-5 py-3"><input type="text" value="${s.link}" onchange="updateAttr(${s.id}, 'link', this.value)" placeholder="Link Drive..." class="border border-slate-200 rounded-lg p-2.5 text-[10px] md:text-xs w-full min-w-[140px] focus:border-blue-500 bg-slate-50 focus:bg-white transition"></td>
+                    <td class="px-4 md:px-5 py-3">${statusHtml}</td>
+                    <td class="px-3 md:px-4 py-3 text-center">${actionHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateAttr(id, key, value) {
+            let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+            let item = scripts.find(i => i.id === id);
+            if(item) { item[key] = value; localStorage.setItem('os_scripts_v20', JSON.stringify(scripts)); }
+        }
+
+        function safeMoveToTrash(id) {
+            if(confirm("Bạn có chắc chắn muốn đưa kịch bản này vào Thùng rác?")) {
+                let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+                let item = scripts.find(i => i.id === id);
+                if(item) {
+                    item.status = 'trashed';
+                    item.deletedAt = new Date().toLocaleDateString('vi-VN');
+                    localStorage.setItem('os_scripts_v20', JSON.stringify(scripts));
+                    loadDashboard();
+                    showToast("Đã đưa vào thùng rác.", "info");
+                }
+            }
+        }
+
+        function restoreItem(id) {
+            let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+            let item = scripts.find(i => i.id === id);
+            if(item) {
+                item.status = 'Demo kịch bản';
+                delete item.deletedAt;
+                localStorage.setItem('os_scripts_v20', JSON.stringify(scripts));
+                loadDashboard();
+                showToast("Đã phục hồi kịch bản.", "success");
+            }
+        }
+
+        function toggleTrashView() {
+            isTrashView = !isTrashView;
+            document.getElementById('btnToggleTrash').innerHTML = isTrashView ? "⬅️ Trở về OS" : "🗑️ Thùng rác";
+            document.getElementById('btnEmptyTrash').classList.toggle('hidden', !isTrashView);
+            loadDashboard();
+        }
+
+        function emptyTrash() {
+            if(confirm('XÓA VĨNH VIỄN toàn bộ kịch bản trong thùng rác? Bạn không thể khôi phục thao tác này.')) {
+                let scripts = JSON.parse(localStorage.getItem('os_scripts_v20') || '[]');
+                scripts = scripts.filter(s => s.status !== 'trashed');
+                localStorage.setItem('os_scripts_v20', JSON.stringify(scripts));
+                loadDashboard();
+                showToast("Đã dọn sạch thùng rác.", "success");
+            }
+        }
+    </script>
+</body>
+</html>
