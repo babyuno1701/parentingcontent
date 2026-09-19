@@ -551,36 +551,12 @@
             }
 
             btn.innerHTML = '<span class="animate-pulse">⏳ Đang phân tích & Viết kịch bản...</span>';
-
-            // CỘNG GỘP KIẾN THỨC VÀO PROMPT
-            const systemPrompt = `Đóng vai là Chị Kiều - một Executive Parenting Coach dành cho giới C-Level và Thượng lưu.
-Tone giọng: Sang trọng, điềm tĩnh, ấm áp, sắc bén (như một Cựu CEO), không dạy đời, không phán xét.
-
-[KHO KIẾN THỨC BỘ NÃO NỘI BỘ MỚI NHẤT]
-Mày BẮT BUỘC phải ưu tiên sử dụng các kiến thức, thông tin khóa học, hoặc xu hướng (trend) được cung cấp dưới đây để làm chất liệu viết kịch bản:
+          
+           let prompt = `Đóng vai chuyên gia kịch bản.
+[KHO KIẾN THỨC BỘ NÃO NỘI BỘ - ưu tiên dùng làm chất liệu]:
 ${brainMemory}
 -------------------
-
-NHIỆM VỤ: Viết 1 Block kịch bản Master (Thời lượng 15 phút, gồm 4 chương mini) dựa trên các định hướng:
-- Phân nhánh: ${masterBlock}
-- Tử Huyệt Tâm Lý khai thác: ${painpoint}
-- Tình huống (Triệu chứng): ${symptom}
-- CASE STUDY THỰC TẾ cần lồng ghép: ${casestudy}
-
-YÊU CẦU PHONG CÁCH "PLAY LIFE":
-BÁM SÁT TUYỆT ĐỐI tinh thần "Play Life - Thong dong dạo chơi và đồng hành cùng con trẻ". 
-
-ĐỊNH DẠNG TRÌNH BÀY (BẮT BUỘC LÀ BẢNG MARKDOWN):
-Tuyệt đối phải trả về 1 BẢNG (Markdown Table) gồm đúng 4 cột: 
-| Chương / Mini | Nội dung chính (Lời thoại chi tiết) | Tư vấn đạo diễn (Góc máy, biểu cảm, âm nhạc) | Giá trị cốt lõi Ba Mẹ nhận được |
-
-Cấu trúc 4 hàng của bảng đại diện cho 4 Chương Mini:
-- Dòng 1: C1 - COACH (Gỡ phòng thủ, mở đầu bằng câu hỏi phản biện, sử dụng tình huống triệu chứng).
-- Dòng 2: C2 - TRAINER (Giải mã cơ chế tâm lý - ƯU TIÊN DÙNG KIẾN THỨC TỪ BỘ NÃO NẾU PHÙ HỢP).
-- Dòng 3: C3 - MENTOR (Lồng ghép Case Study thực tế ở trên để tạo góc nhìn mới).
-- Dòng 4: C4 - EXECUTIVE COACH (Hành động & CTA: ${ctaInstruction}).`;
-
-            let prompt = `Đóng vai chuyên gia kịch bản. Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}`;
+Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}`;
             if(trendLink) prompt += `\nLƯU Ý: Phân tích ý chính từ LINK TRENDING: ${trendLink}`;
             prompt += `\nTạo ${globalIdeas.length > 0 ? `THÊM ${count} ý tưởng MỚI` : `${count} ý tưởng`} tình huống thực tế. BẮT BUỘC TRẢ VỀ JSON MẢNG:
 [ { "symptom": "[Bối cảnh] + [Hành vi bề mặt]", "case_study": "Chi tiết tình huống..." } ]`;
@@ -603,9 +579,12 @@ Cấu trúc 4 hàng của bảng đại diện cho 4 Chương Mini:
                 showToast(`Đã tạo thành công!`, "success");
             } catch (err) {
                 showToast(`Lỗi: ${err.message}`, "error");
-            } finally {
-                btnIdea.innerHTML = '✨ Sinh 10 Idea AI'; btnIdea.disabled = false;
-                btnLoadMore.innerHTML = '🔄 Tạo Tiếp 5 Option Khác'; btnLoadMore.disabled = false;
+              } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🎬 Khởi Chạy Đạo Diễn AI</span>';
+                loading.classList.add('hidden');
+                loading.classList.remove('flex');
+            }
             }
         }
 
@@ -689,7 +668,24 @@ Cấu trúc 4 hàng của bảng đại diện cho 4 Chương Mini:
             else if (ctaType === 'insight_question') ctaInstruction = `Đặt 1 câu hỏi insight xoáy sâu tâm lý để khán giả comment. Cung cấp thêm 3 câu hỏi insight dự phòng ở cuối kịch bản.`;
 
             // Lệnh 24 Hàng & Khoa Học
+            // HÚT KIẾN THỨC TỪ BỘ NÃO (Google Sheets qua n8n)
+            let brainMemory = "(Không có dữ liệu bộ não)";
+            try {
+                const brainUrl = "https://nguyenthienphuc1701.app.n8n.cloud/webhook/brain-memory";
+                const brainResponse = await fetch(brainUrl);
+                brainMemory = await brainResponse.text();
+            } catch (err) {
+                console.log("Lỗi tải bộ não:", err);
+                brainMemory = "(Không thể kết nối Bộ não, AI dùng kiến thức mặc định)";
+            }
+
             let systemPromptText = `Đóng vai Chị Kiều - Executive Parenting Coach. 
+
+[KHO KIẾN THỨC BỘ NÃO NỘI BỘ MỚI NHẤT]
+BẮT BUỘC ưu tiên dùng các kiến thức, khóa học, xu hướng dưới đây làm chất liệu viết kịch bản (nếu phù hợp):
+${brainMemory}
+-------------------
+
 Bối cảnh: ${contextVal} -> Ghi chú vào cột Tư vấn đạo diễn.
 Độ tuổi: ${ageVal} -> Điều chỉnh ngôn từ và giải pháp khớp tuyệt đối với tâm sinh lý lứa tuổi này.
 
