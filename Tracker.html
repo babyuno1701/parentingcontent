@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ Điều Hành Quản Lý Series Video</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-4 md:p-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-slate-800">🎬 Quản Lý Series Video</h1>
+      <button onclick="loadData()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">↻ Làm mới</button>
+    </div>
+    <div id="status" class="text-slate-500 mb-4">Đang tải dữ liệu...</div>
+    <div class="overflow-x-auto bg-white rounded-xl shadow">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-800 text-white">
+          <tr>
+            <th class="px-3 py-3 text-left">STT</th>
+            <th class="px-3 py-3 text-left">SKU</th>
+            <th class="px-3 py-3 text-left">Series</th>
+            <th class="px-3 py-3 text-left">Tiêu đề video</th>
+            <th class="px-3 py-3 text-left">Trạng thái</th>
+            <th class="px-3 py-3 text-left">KB Demo</th>
+            <th class="px-3 py-3 text-left">KB Final</th>
+            <th class="px-3 py-3 text-left">Cập nhật</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal xem KB Demo -->
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="modalTitle" class="font-bold text-lg"></h3>
+        <button onclick="document.getElementById('modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 text-2xl">&times;</button>
+      </div>
+      <pre id="modalBody" class="whitespace-pre-wrap break-words text-sm text-slate-700 font-sans"></pre>
+    </div>
+  </div>
+
+  <script>
+    const LIST_URL = "https://nguyenthienphuc1701.app.n8n.cloud/webhook/series-list";
+
+    function esc(s){ return (s||"").toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+    function showDemo(title, body){
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').textContent = body || "(chưa có nội dung)";
+      const m = document.getElementById('modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    }
+
+    async function loadData(){
+      const st = document.getElementById('status');
+      st.textContent = "Đang tải dữ liệu...";
+      try{
+        const res = await fetch(LIST_URL + "?t=" + Date.now());
+        const data = await res.json();
+        const rows = (data.rows || []);
+        const tbody = document.getElementById('rows');
+        if(!rows.length){ tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400">Chưa có video nào.</td></tr>'; st.textContent="0 video."; return; }
+        window._rows = rows;
+        tbody.innerHTML = rows.map((r,i) => {
+          const hasFinal = r.kb_final && r.kb_final.trim();
+          const badge = hasFinal
+            ? '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">Đã có final</span>'
+            : '<span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-xs">'+esc(r.status||'Đang chờ')+'</span>';
+          const finalCell = hasFinal
+            ? (/^https?:\/\//.test(r.kb_final.trim())
+                ? '<a href="'+esc(r.kb_final)+'" target="_blank" class="text-indigo-600 underline">Mở link</a>'
+                : '<button onclick="showDemo(\'KB Final\', window._rows['+i+'].kb_final)" class="text-indigo-600 underline">Xem</button>')
+            : '<span class="text-slate-400">—</span>';
+          return '<tr class="border-b hover:bg-slate-50">'
+            + '<td class="px-3 py-2">'+esc(r.stt)+'</td>'
+            + '<td class="px-3 py-2 font-mono text-xs">'+esc(r.sku)+'</td>'
+            + '<td class="px-3 py-2">'+esc(r.series)+'</td>'
+            + '<td class="px-3 py-2">'+esc(r.title)+'</td>'
+            + '<td class="px-3 py-2">'+badge+'</td>'
+            + '<td class="px-3 py-2"><button onclick="showDemo(\''+esc(r.title)+'\', window._rows['+i+'].kb_demo)" class="text-indigo-600 underline">Xem</button></td>'
+            + '<td class="px-3 py-2">'+finalCell+'</td>'
+            + '<td class="px-3 py-2 text-xs text-slate-400">'+esc((r.updated_at||'').substring(0,10))+'</td>'
+            + '</tr>';
+        }).join('');
+        st.textContent = rows.length + " video.";
+      }catch(e){ st.textContent = "Lỗi tải dữ liệu: " + e.message; }
+    }
+    loadData();
+  </script>
+</body>
+</html>
