@@ -161,6 +161,11 @@
                             </div>
 
                             <div id="reelsFields" class="hidden mb-4">
+                                <label class="block text-sm font-semibold text-slate-700 mb-1">🎬 Loại Reel</label>
+                                <select id="reelType" class="w-full rounded-xl p-3 shadow-sm bg-white mb-3">
+                                    <option value="cut">Cắt ra từ clip Master (RMC)</option>
+                                    <option value="indep">Tạo KB độc lập (REEL)</option>
+                                </select>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1">⏱️ Thời lượng Reels</label>
                                 <select id="reelDuration" class="w-full rounded-xl p-3 shadow-sm bg-white">
                                     <option value="01 phút">01 phút</option>
@@ -616,11 +621,19 @@ Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}
 
         // --- KHỞI TẠO KỊCH BẢN (24 HÀNG & KHOA HỌC) ---
         function generateSKU(type) {
-            let stats = JSON.parse(localStorage.getItem('skuStatsV22') || '{"master":0,"reels":0,"zoom":0}');
-            stats[type] = (stats[type] || 0) + 1;
+            let stats = JSON.parse(localStorage.getItem('skuStatsV22') || '{}');
+            let key = type;
+            let prefix;
+            if (type === 'master') { prefix = 'MAS'; }
+            else if (type === 'zoom') { prefix = 'ZOO'; }
+            else {
+                const reelType = document.getElementById('reelType') ? document.getElementById('reelType').value : 'indep';
+                if (reelType === 'cut') { key = 'reels_cut'; prefix = 'RMC'; }
+                else { key = 'reels_indep'; prefix = 'REEL'; }
+            }
+            stats[key] = (stats[key] || 0) + 1;
             localStorage.setItem('skuStatsV22', JSON.stringify(stats));
-            let prefix = type === 'master' ? 'MAS' : type === 'reels' ? 'REL' : 'ZOO';
-            return `${prefix}-${String(stats[type]).padStart(3, '0')}`;
+            return `${prefix}-${String(stats[key]).padStart(3, '0')}`;
         }
 
         async function executeScriptGeneration() {
