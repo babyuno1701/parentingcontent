@@ -24,6 +24,8 @@
             <th class="px-3 py-3 text-left">Trạng thái</th>
             <th class="px-3 py-3 text-left">KB Demo</th>
             <th class="px-3 py-3 text-left">KB Final</th>
+            <th class="px-3 py-3 text-left">Video Demo</th>
+            <th class="px-3 py-3 text-left">Video Final</th>
             <th class="px-3 py-3 text-left">Cập nhật</th>
           </tr>
         </thead>
@@ -55,6 +57,30 @@
       m.classList.remove('hidden'); m.classList.add('flex');
     }
 
+    function toEmbed(url){
+      url = (url||'').trim();
+      let m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+      if(m) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
+      m = url.match(/[?&]id=([^&]+)/);
+      if(m && url.indexOf('drive.google')>-1) return 'https://drive.google.com/file/d/'+m[1]+'/preview';
+      m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{6,})/);
+      if(m) return 'https://www.youtube.com/embed/'+m[1];
+      return url;
+    }
+
+    function showVideo(title, link){
+      link = (link||'').trim();
+      document.getElementById('modalTitle').textContent = title;
+      const body = document.getElementById('modalBody');
+      if(!link){ body.textContent = "(chưa có video)"; }
+      else {
+        body.innerHTML = '<iframe src="'+toEmbed(link)+'" style="width:100%;height:360px;border:0;border-radius:8px" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
+          + '<div style="margin-top:8px"><a href="'+link+'" target="_blank" class="text-indigo-600 underline">Mở tab mới</a></div>';
+      }
+      const m = document.getElementById('modal');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    }
+
     async function loadData(){
       const st = document.getElementById('status');
       st.textContent = "Đang tải dữ liệu...";
@@ -63,7 +89,7 @@
         const data = await res.json();
         const rows = (data.rows || []);
         const tbody = document.getElementById('rows');
-        if(!rows.length){ tbody.innerHTML = '<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400">Chưa có video nào.</td></tr>'; st.textContent="0 video."; return; }
+        if(!rows.length){ tbody.innerHTML = '<tr><td colspan="10" class="px-3 py-6 text-center text-slate-400">Chưa có video nào.</td></tr>'; st.textContent="0 video."; return; }
         window._rows = rows;
         tbody.innerHTML = rows.map((r,i) => {
           const hasFinal = r.kb_final && r.kb_final.trim();
@@ -83,6 +109,8 @@
             + '<td class="px-3 py-2">'+badge+'</td>'
             + '<td class="px-3 py-2"><button onclick="showDemo(\''+esc(r.title)+'\', window._rows['+i+'].kb_demo)" class="text-indigo-600 underline">Xem</button></td>'
             + '<td class="px-3 py-2">'+finalCell+'</td>'
+            + '<td class="px-3 py-2">'+(r.video_demo&&r.video_demo.trim()?'<button onclick="showVideo(\'Video Demo\', window._rows['+i+'].video_demo)" class="text-indigo-600 underline">▶ Xem</button>':'<span class="text-slate-400">—</span>')+'</td>'
+            + '<td class="px-3 py-2">'+(r.video_final&&r.video_final.trim()?'<button onclick="showVideo(\'Video Final\', window._rows['+i+'].video_final)" class="text-indigo-600 underline">▶ Xem</button>':'<span class="text-slate-400">—</span>')+'</td>'
             + '<td class="px-3 py-2 text-xs text-slate-400">'+esc((r.updated_at||'').substring(0,10))+'</td>'
             + '</tr>';
         }).join('');
