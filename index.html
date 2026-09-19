@@ -125,6 +125,17 @@
                                 <option value="reels">2. Video Reels Viral (01 - 03 phút)</option>
                                 <option value="zoom">3. Video Thông Báo Zoom/Live</option>
                             </select>
+
+                            <!-- SKU CHUAN HOA -->
+                            <label class="block text-xs font-semibold text-slate-700 mb-1 mt-2">🏷️ Mã SKU (chuẩn hóa đầu ra)</label>
+                            <div class="flex gap-2 mb-2">
+                                <select id="skuPrefix" class="rounded-xl p-3 shadow-sm bg-white text-sm font-semibold" style="width:110px">
+                                    <option value="MAS-">MAS-</option>
+                                    <option value="REEL-">REEL-</option>
+                                    <option value="ZOO-">ZOO-</option>
+                                </select>
+                                <input type="text" id="skuNumber" inputmode="numeric" placeholder="Nhập số (VD: 001)" class="flex-1 rounded-xl p-3 bg-white shadow-sm text-sm border-blue-300">
+                            </div>
                             
                             <!-- Bối cảnh -->
                             <label class="block text-xs font-semibold text-slate-700 mb-1 mt-2">📍 Bối cảnh quay (Setting)</label>
@@ -393,6 +404,7 @@
         let currentRawMarkdown = ""; 
         let draftRawMarkdown = ""; 
         let currentSKU = "";
+        let currentTitle = "";
         let isTrashView = false;
         let globalIdeas = [];
         let lastIdeaPromptHash = "";
@@ -660,7 +672,11 @@ Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}
             
             if(!pain || !sym || !caseSt || !contextVal || !ageVal) return showToast("Vui lòng điền đủ các trường (Đặc biệt nếu chọn 'Khác')!", "warning");
             
-            currentSKU = generateSKU(type);
+            const skuPrefix = document.getElementById('skuPrefix').value;
+            const skuNumberRaw = document.getElementById('skuNumber').value.trim();
+            if(!skuNumberRaw) return showToast("Vui lòng nhập số SKU!", "warning");
+            const skuNum = /^\d+$/.test(skuNumberRaw) ? String(parseInt(skuNumberRaw, 10)).padStart(3, '0') : skuNumberRaw;
+            currentSKU = `${skuPrefix}${skuNum}`;
             const dateNow = new Date().toLocaleString('vi-VN');
 
             // Tạo Header hiển thị thông tin sản xuất (Bảo tồn trong file MD/Word)
@@ -738,6 +754,20 @@ Mỗi Chương gồm 6 hàng nối tiếp:
                 if(data.error) throw new Error(data.error.message);
 
                 currentRawMarkdown = generatedHeaderInfo + data.candidates[0].content.parts[0].text;
+
+                // === TU DONG TAO TIEU DE HAP DAN TU BO NAO ===
+                currentTitle = "";
+                try {
+                    const titlePrompt = `Dựa vào nội dung kịch bản dưới đây, hãy đặt MỘT tiêu đề video thật hấp dẫn, ngắn gọn (tối đa 12 từ), gây tò mò, đúng insight tâm lý làm cha mẹ. CHỈ trả về đúng 1 dòng tiêu đề, KHÔNG giải thích, KHÔNG dùng dấu ngoặc kép.\n\n---\n${currentRawMarkdown}`;
+                    const titleRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{text: titlePrompt}] }], generationConfig: { temperature: 0.9, maxOutputTokens: 512 } })
+                    });
+                    const titleData = await titleRes.json();
+                    if (titleData.candidates && titleData.candidates[0] && titleData.candidates[0].content) {
+                        currentTitle = titleData.candidates[0].content.parts[0].text.trim().replace(/^["'*#\s]+|["'*#\s]+$/g, '').split('\n')[0].trim();
+                    }
+                } catch (err) { console.log("Loi tao tieu de:", err); }
                 
                 let parsedHTML = marked.parse(currentRawMarkdown);
                 outDiv.innerHTML = parsedHTML.replace(/<table/g, '<div class="script-table-container"><table').replace(/<\/table>/g, '</table></div>');
