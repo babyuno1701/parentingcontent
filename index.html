@@ -893,7 +893,7 @@ Mỗi Chương gồm 6 hàng nối tiếp:
                     sku: currentSKU,
                     stt: "",
                     series: newEntry.pillar,
-                    title: `${durationStr} | ${contextVal} | ${ageVal}`,
+                   title: currentTitle || `${durationStr} | ${contextVal} | ${ageVal}`,
                     kb_demo: currentRawMarkdown
                 })
             }).then(r => r.json())
