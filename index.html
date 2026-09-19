@@ -147,6 +147,7 @@
                                 <select id="aspectRatio" class="w-full rounded-xl p-3 shadow-sm bg-white">
                                     <option value="Dọc (9:16) - Tiktok, Shorts">Dọc (9:16) - Tiktok, Shorts</option>
                                     <option value="Ngang (16:9) - Youtube, FB">Ngang (16:9) - Youtube, FB</option>
+                                    <option value="Vuông (1:1) - FB Post">Vuông (1:1) - FB Post</option>
                                 </select>
                             </div>
 
@@ -591,7 +592,7 @@ Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}
             container.innerHTML = '';
             globalIdeas.forEach((idea, index) => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-5 rounded-2xl border hover:border-[#d4af37] shadow-sm cursor-pointer transition flex flex-col justify-between";
+                  card.className = "bg-white p-5 rounded-2xl border hover:border-[#d4af37] shadow-sm cursor-pointer transition flex flex-col justify-between overflow-hidden min-w-0";
                 card.onclick = () => {
                     document.getElementById('symptom').value = idea.symptom;
                     document.getElementById('casestudy').value = idea.case_study;
@@ -600,8 +601,8 @@ Pillar: ${checkedPillars} | Tử huyệt: ${painpoint} | Độ tuổi: ${ageVal}
                 };
                 card.innerHTML = `
                     <div>
-                        <div class="font-bold text-slate-800 mb-2 text-sm"><span class="bg-[#d4af37] text-white px-2 py-1 rounded text-[10px] mr-2">Opt ${index + 1}</span> ${idea.symptom}</div>
-                        <div class="text-[13px] text-slate-500 mb-3">${idea.case_study}</div>
+                        <div class="font-bold text-slate-800 mb-2 text-sm break-words"><span class="bg-[#d4af37] text-white px-2 py-1 rounded text-[10px] mr-2">Opt ${index + 1}</span> ${idea.symptom}</div>
+                        <div class="text-[13px] text-slate-500 mb-3 break-words whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar pr-1">${idea.case_study}</div>
                     </div>
                     <div class="text-[10px] font-bold text-blue-600 uppercase mt-auto pt-2 border-t">👉 Chọn ý tưởng này</div>
                 `;
