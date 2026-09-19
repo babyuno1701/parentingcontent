@@ -841,6 +841,21 @@ Mỗi Chương gồm 6 hàng nối tiếp:
             downloadWordOnly();
             loadDashboard();
             showToast("✅ Đã tải Word & Lưu Tiến Độ!", "success");
+
+            // === Đồng bộ lên tracker Series Video OS ===
+            fetch("https://nguyenthienphuc1701.app.n8n.cloud/webhook/series-save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sku: currentSKU,
+                    stt: "",
+                    series: newEntry.pillar,
+                    title: `${durationStr} | ${contextVal} | ${ageVal}`,
+                    kb_demo: currentRawMarkdown
+                })
+            }).then(r => r.json())
+              .then(d => { if(d.ok) showToast("☁️ Đã đồng bộ tracker: " + d.sku, "success"); })
+              .catch(e => showToast("Lỗi đồng bộ tracker: " + e.message, "error"));
         }
 
         function downloadWordOnly() {
